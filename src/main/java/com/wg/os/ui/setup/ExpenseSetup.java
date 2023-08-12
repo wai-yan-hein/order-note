@@ -1,0 +1,247 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.wg.os.ui.setup;
+
+import com.mongodb.client.result.DeleteResult;
+import com.wg.os.common.Global;
+import com.wg.os.document.Expense;
+import com.wg.os.service.ExpenseService;
+import com.wg.os.ui.common.ExpenseTabelModel;
+import com.wg.os.ui.common.SelectionObserver;
+import com.wg.os.util.Util1;
+import java.awt.HeadlessException;
+import java.awt.event.ActionEvent;
+import java.util.List;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ *
+ * @author Lenovo
+ */
+@Component
+public class ExpenseSetup extends javax.swing.JPanel {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExpenseSetup.class);
+    private Expense exp;
+    private int selectRow = -1;
+    private SelectionObserver observer;
+
+    public void setObserver(SelectionObserver observer) {
+        this.observer = observer;
+    }
+
+    @Autowired
+    private ExpenseTabelModel expenseTabelModel;
+    @Autowired
+    private ExpenseService expService;
+
+    /**
+     * Creates new form CitySetup
+     */
+    public ExpenseSetup() {
+        initComponents();
+    }
+
+    public void initTabel() {
+        Util1.setLookAndFeel(this);
+        setCurrentFont();
+        tblExpense.setModel(expenseTabelModel);
+        expenseTabelModel.setListExp(expService.findAll());
+        tblExpense.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblExpense.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                if (tblExpense.getSelectedRow() >= 0) {
+                    selectRow = tblExpense.convertRowIndexToModel(tblExpense.getSelectedRow());
+                }
+
+            }
+        });
+        tblExpense.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "Del-Action");
+        tblExpense.getActionMap().put("Del-Action", actionItemDelete);
+
+    }
+    private final Action actionItemDelete = new AbstractAction() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int row = tblExpense.getSelectedRow();
+
+            if (row >= 0) {
+                try {
+                    int showConfirmDialog = JOptionPane.showConfirmDialog(Global.parentFrame, "Are you sure to Delete");
+                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
+                        Expense exp = expenseTabelModel.getExpense(row);
+                        DeleteResult remove = expService.remove(exp.getId());
+                        if (remove.getDeletedCount() == 1) {
+                            expenseTabelModel.deleteExpense(row);
+                        }
+                    }
+                } catch (HeadlessException ex) {
+                    LOGGER.info("Remove Expense :" + ex.getMessage());
+                }
+            }
+        }
+    };
+
+    private void save() {
+
+        try {
+            if (isValidEntry()) {
+                expenseTabelModel.addExpense(exp);
+                if (observer != null) {
+                    observer.selected("ExpenseSetup", exp);
+
+                }
+            }
+        } catch (HeadlessException e) {
+            LOGGER.error("saveCity  :" + e.getMessage());
+        }
+    }
+
+    private boolean isValidEntry() {
+        boolean status = false;
+        String expDesp = txtExpDesp.getText();
+        if (expDesp.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Field Cannot be empty...", "Expense Setup", JOptionPane.ERROR_MESSAGE);
+            status = false;
+        } else {
+            exp = new Expense();
+            exp.setExpDesp(expDesp);
+            Expense save = expService.save(exp);
+            if (save != null) {
+                clear();
+                JOptionPane.showMessageDialog(Global.parentFrame, "Save");
+                status = true;
+            }
+        }
+        return status;
+    }
+
+    private void clear() {
+        txtExpDesp.setText("");
+        tblExpense.getSelectionModel().clearSelection();
+
+    }
+
+    private void setCurrentFont() {
+        java.awt.Component[] components = getComponents();
+        for (java.awt.Component com : components) {
+            com.setFont(Global.font);
+        }
+        tblExpense.setFont(Global.font);
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblExpense = new javax.swing.JTable();
+        txtExpDesp = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+
+        setBackground(new java.awt.Color(255, 255, 255));
+        addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                formFocusLost(evt);
+            }
+        });
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentHidden(java.awt.event.ComponentEvent evt) {
+                formComponentHidden(evt);
+            }
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
+
+        tblExpense.setFont(Global.font);
+        tblExpense.setRowHeight(20);
+        jScrollPane1.setViewportView(tblExpense);
+
+        txtExpDesp.setFont(Global.font);
+        txtExpDesp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtExpDespActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setFont(Global.font);
+        jLabel2.setText("Expense");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(txtExpDesp, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(37, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtExpDesp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        // TODO add your handling code here:
+        LOGGER.info("Expense Component Shown");
+
+    }//GEN-LAST:event_formComponentShown
+
+    private void txtExpDespActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtExpDespActionPerformed
+        // TODO add your handling code here:
+        save();
+    }//GEN-LAST:event_txtExpDespActionPerformed
+
+    private void formComponentHidden(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentHidden
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_formComponentHidden
+
+    private void formFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_formFocusLost
+        // TODO add your handling code here:
+
+    }//GEN-LAST:event_formFocusLost
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable tblExpense;
+    private javax.swing.JTextField txtExpDesp;
+    // End of variables declaration//GEN-END:variables
+
+}

@@ -1,0 +1,226 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package com.wg.os.ui.setup;
+
+import com.mongodb.client.result.DeleteResult;
+import com.wg.os.common.Global;
+import com.wg.os.document.Gender;
+import com.wg.os.service.GenderService;
+import com.wg.os.ui.common.GenderTabelModel;
+import com.wg.os.ui.common.SelectionObserver;
+import com.wg.os.util.Util1;
+import java.awt.HeadlessException;
+import java.awt.event.ActionEvent;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ *
+ * @author Lenovo
+ */
+@Component
+public class GenderSetup extends javax.swing.JPanel {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GenderSetup.class);
+    private Gender gender;
+    private int selectRow = -1;
+    private SelectionObserver observer;
+
+    public void setObserver(SelectionObserver observer) {
+        this.observer = observer;
+    }
+
+    @Autowired
+    private GenderTabelModel genderTabelModel;
+    @Autowired
+    private GenderService genderService;
+
+    /**
+     * Creates new form CitySetup
+     */
+    public GenderSetup() {
+        initComponents();
+    }
+
+    public void initTabel() {
+        Util1.setLookAndFeel(this);
+        setCurrentFont();
+        tblGender.setModel(genderTabelModel);
+        genderTabelModel.setListGender(genderService.findAll());
+        tblGender.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblGender.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                if (tblGender.getSelectedRow() >= 0) {
+                    selectRow = tblGender.convertRowIndexToModel(tblGender.getSelectedRow());
+                }
+
+            }
+        });
+        tblGender.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "Del-Action");
+        tblGender.getActionMap().put("Del-Action", actionItemDelete);
+
+    }
+    private final Action actionItemDelete = new AbstractAction() {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            int row = tblGender.getSelectedRow();
+
+            if (row >= 0) {
+                try {
+                    int showConfirmDialog = JOptionPane.showConfirmDialog(Global.parentFrame, "Are you sure to Delete");
+                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
+                        Gender city = genderTabelModel.getGender(row);
+                        DeleteResult remove = genderService.remove(city.getId());
+                        if (remove.getDeletedCount() == 1) {
+                            genderTabelModel.deleteGender(row);
+                        }
+                    }
+                } catch (HeadlessException ex) {
+                    LOGGER.info("Remove Gender :" + ex.getMessage());
+                }
+            }
+        }
+    };
+
+    private void save() {
+
+        try {
+            if (isValidEntry()) {
+                genderTabelModel.addGender(gender);
+                if (observer != null) {
+                    observer.selected("GenderSetup", gender);
+                }
+            }
+        } catch (HeadlessException e) {
+            LOGGER.error("saveCity  :" + e.getMessage());
+        }
+    }
+
+    private boolean isValidEntry() {
+        boolean status = false;
+        String gen = txtGender.getText();
+        if (gen.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Field Cannot be empty...", "Gender Setup", JOptionPane.ERROR_MESSAGE);
+            status = false;
+        } else {
+            gender = new Gender();
+            gender.setCusGender(gen);
+            Gender save = genderService.save(gender);
+            if (save != null) {
+                clear();
+                JOptionPane.showMessageDialog(Global.parentFrame, "Save");
+                status = true;
+            }
+        }
+        return status;
+    }
+
+    private void clear() {
+        txtGender.setText("");
+        tblGender.getSelectionModel().clearSelection();
+
+    }
+
+    private void setCurrentFont() {
+        java.awt.Component[] components = getComponents();
+        for (java.awt.Component com : components) {
+            com.setFont(Global.font);
+        }
+        tblGender.setFont(Global.font);
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblGender = new javax.swing.JTable();
+        txtGender = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+
+        setBackground(new java.awt.Color(255, 255, 255));
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+        });
+
+        tblGender.setFont(Global.font);
+        tblGender.setRowHeight(20);
+        jScrollPane1.setViewportView(tblGender);
+
+        txtGender.setFont(Global.font);
+        txtGender.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtGenderActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setFont(Global.font);
+        jLabel2.setText("Gender");
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(txtGender, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(39, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtGender, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 388, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        // TODO add your handling code here:
+        LOGGER.info("CitySetup Component Shown");
+
+    }//GEN-LAST:event_formComponentShown
+
+    private void txtGenderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtGenderActionPerformed
+        // TODO add your handling code here:
+        save();
+    }//GEN-LAST:event_txtGenderActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTable tblGender;
+    private javax.swing.JTextField txtGender;
+    // End of variables declaration//GEN-END:variables
+}
